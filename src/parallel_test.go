@@ -1,7 +1,7 @@
 package main
 
 import (
-	"GameOfLife/src/Game"
+	"GameOfLife/src/Simulation"
 	"math/rand/v2"
 	"strconv"
 	"testing"
@@ -9,13 +9,18 @@ import (
 
 func BenchmarkUpdateAlgorithms(b *testing.B) {
 	// create two equal grids with 100000 cells and random inhibited cells
-	grid := Game.NewGrid(1000, 1000)
-	parallelGrid := Game.NewGrid(1000, 1000)
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 100; j++ {
-			if rand.IntN(2) == 1 {
-				grid.Cells[i][j].Inhibited = true
-				parallelGrid.Cells[i][j].Inhibited = true
+
+	x, y, z := 100, 100, 100
+
+	grid := Simulation.NewGrid(x, y, z)
+	parallelGrid := Simulation.NewGrid(x, y, z)
+	for i := 0; i < x; i++ {
+		for j := 0; j < y; j++ {
+			for k := 0; k < z; k++ {
+				if rand.IntN(2) == 1 {
+					grid.Cells[i][j][k].Inhibited = true
+					parallelGrid.Cells[i][j][k].Inhibited = true
+				}
 			}
 		}
 	}
@@ -35,20 +40,18 @@ func BenchmarkUpdateAlgorithms(b *testing.B) {
 
 func BenchmarkAutoParallelization(b *testing.B) {
 	createAutoBenchmark(10, b)
+	createAutoBenchmark(20, b)
+	createAutoBenchmark(50, b)
 	createAutoBenchmark(100, b)
-	createAutoBenchmark(1000, b)
-	createAutoBenchmark(2000, b)
-	createAutoBenchmark(3000, b)
-	createAutoBenchmark(4000, b)
-	createAutoBenchmark(5000, b)
-	createAutoBenchmark(10000, b)
-	createAutoBenchmark(20000, b)
+	createAutoBenchmark(200, b)
+	createAutoBenchmark(500, b)
+	//createAutoBenchmark(1000, b) to much ram
 }
 
 func createAutoBenchmark(n int, b *testing.B) {
 
 	// create a game with a grid of 10000x10000 cells
-	game2 := Game.NewGame(n, n)
+	game2 := Simulation.NewSimulation(n, n, n)
 	game2.AutoParallelize = false
 	b.Run(strconv.Itoa(n)+" AP Off Cycle", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -58,7 +61,7 @@ func createAutoBenchmark(n int, b *testing.B) {
 		}
 	})
 
-	game4 := Game.NewGame(n, n)
+	game4 := Simulation.NewSimulation(n, n, n)
 	game4.AutoParallelize = true
 
 	b.Run(strconv.Itoa(n)+" AP On Cycle", func(b *testing.B) {

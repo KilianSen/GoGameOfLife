@@ -1,8 +1,8 @@
-package Game
+package Simulation
 
 import "time"
 
-type Game struct {
+type Simulation struct {
 	Grid        *Grid
 	UseParallel bool
 
@@ -11,12 +11,12 @@ type Game struct {
 	parallelDuration    int64
 }
 
-func NewGame(x int, y int) *Game {
-	game := &Game{Grid: NewGrid(x, y), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
+func NewSimulation(x int, y int, z int) *Simulation {
+	game := &Simulation{Grid: NewGrid(x, y, z), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
 	return game
 }
 
-func (g *Game) Cycle() {
+func (g *Simulation) Cycle() {
 	if g.AutoParallelize {
 		if g.nonParallelDuration == 0 {
 			g.UseParallel = false
