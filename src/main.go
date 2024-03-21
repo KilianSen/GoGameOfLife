@@ -1,7 +1,9 @@
 package main
 
-func main() {
-	// Create a new simulation
-	//simulation := Simulation.NewSimulation(100, 100, 0)
+import "GameOfLife/src/GUI"
 
+func main() {
+	print(321)
+	GUI.GUI()
+	print(123)
 }
