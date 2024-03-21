@@ -11,9 +11,8 @@ type Game struct {
 	parallelDuration    int64
 }
 
-func (Game) New(x int, y int) *Game {
-	grid := Grid{}
-	game := &Game{Grid: grid.New(x, y), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
+func NewGame(x int, y int) *Game {
+	game := &Game{Grid: NewGrid(x, y), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
 	return game
 }
 

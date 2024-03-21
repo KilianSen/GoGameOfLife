@@ -11,7 +11,7 @@ type Grid struct {
 	done  chan bool
 }
 
-func (g *Grid) New(x int, y int) *Grid {
+func NewGrid(x int, y int) *Grid {
 	// initialize the grid with cells all set to not inhibited
 	var cells = make([][]Cell, x)
 	for i := range cells {
