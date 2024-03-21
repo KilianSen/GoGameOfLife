@@ -11,7 +11,7 @@ type Grid struct {
 	done  chan bool
 }
 
-func (g Grid) New(x int, y int) *Grid {
+func (g *Grid) New(x int, y int) *Grid {
 	// initialize the grid with cells all set to not inhibited
 	var cells = make([][]Cell, x)
 	for i := range cells {
@@ -31,7 +31,7 @@ func (g Grid) New(x int, y int) *Grid {
 	}
 }
 
-func (g Grid) GetNeighbours(c Cell) []Cell {
+func (g *Grid) GetNeighbours(c *Cell) []Cell {
 	// get the neighbours of a cell
 	var neighbours []Cell
 	for i := -1; i < 2; i++ {
@@ -47,7 +47,7 @@ func (g Grid) GetNeighbours(c Cell) []Cell {
 	return neighbours
 }
 
-func (g Grid) Print() {
+func (g *Grid) Print() {
 	// print the grid
 	for i := 0; i < len(g.Cells); i++ {
 		for j := 0; j < len(g.Cells[0]); j++ {
@@ -67,7 +67,7 @@ func (g *Grid) Update() {
 	for i := range newCells {
 		newCells[i] = make([]Cell, len(g.Cells[0]))
 		for j := range newCells[i] {
-			newCells[i][j] = Cell{x: i, y: j, Inhibited: resolveCell(g.Cells[i][j], *g)}
+			newCells[i][j] = Cell{x: i, y: j, Inhibited: resolveCell(&g.Cells[i][j], g)}
 		}
 	}
 	g.Cells = newCells
@@ -93,7 +93,7 @@ func (g *Grid) ParallelUpdate() {
 			for i := start; i < end; i++ {
 				newCells[i] = make([]Cell, len(g.Cells[0]))
 				for j := range newCells[i] {
-					newCells[i][j] = Cell{x: i, y: j, Inhibited: resolveCell(g.Cells[i][j], *g)}
+					newCells[i][j] = Cell{x: i, y: j, Inhibited: resolveCell(&g.Cells[i][j], g)}
 				}
 			}
 			g.done <- true // Signal that this goroutine is done

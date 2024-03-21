@@ -12,7 +12,8 @@ type Game struct {
 }
 
 func (Game) New(x int, y int) *Game {
-	game := &Game{Grid: Grid{}.New(x, y), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
+	grid := Grid{}
+	game := &Game{Grid: grid.New(x, y), UseParallel: false, AutoParallelize: true, nonParallelDuration: 0, parallelDuration: 0}
 	return game
 }
 

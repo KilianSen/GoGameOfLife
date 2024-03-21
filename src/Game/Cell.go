@@ -6,7 +6,7 @@ type Cell struct {
 	Inhibited bool
 }
 
-func resolveCell(c Cell, g Grid) bool {
+func resolveCell(c *Cell, g *Grid) bool {
 	// apply the rules of the game of life to a cell
 	neighbours := g.GetNeighbours(c)
 	var inhibitedNeighbours int

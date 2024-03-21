@@ -9,8 +9,9 @@ import (
 
 func BenchmarkUpdateAlgorithms(b *testing.B) {
 	// create two equal grids with 100000 cells and random inhibited cells
-	grid := Game.Grid{}.New(1000, 1000)
-	parallelGrid := Game.Grid{}.New(1000, 1000)
+	g := Game.Grid{}
+	grid := g.New(1000, 1000)
+	parallelGrid := g.New(1000, 1000)
 	for i := 0; i < 100; i++ {
 		for j := 0; j < 100; j++ {
 			if rand.IntN(2) == 1 {
