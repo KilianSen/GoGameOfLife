@@ -1,9 +1,11 @@
 package main
 
-import "GameOfLife/src/GUI"
+import (
+	"GameOfLife/src/GUI"
+	"runtime"
+)
 
 func main() {
-	print(321)
+	runtime.LockOSThread()
 	GUI.GUI()
-	print(123)
 }
