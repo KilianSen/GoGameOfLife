@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func StringWatchdog(str *string, callback callback, timeout time.Duration) destructor {
+func StringWatchdog(str *string, callback callback, timeout time.Duration) Destructor {
 	var storedHash []byte
 
 	ticker := time.NewTicker(timeout)

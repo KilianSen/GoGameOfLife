@@ -73,9 +73,9 @@ func loadShaders(path string) ([]Shader, error) {
 func compileShader(source string, shaderType uint32) (uint32, error) {
 	shader := gl.CreateShader(shaderType)
 
-	csources, free := gl.Strs(source)
-	gl.ShaderSource(shader, 1, csources, nil)
-	free()
+	csource, free := gl.Strs(source + "\x00")
+	defer free()
+	gl.ShaderSource(shader, 1, csource, nil)
 	gl.CompileShader(shader)
 
 	var status int32
@@ -89,6 +89,5 @@ func compileShader(source string, shaderType uint32) (uint32, error) {
 
 		return 0, fmt.Errorf("failed to compile %v: %v", source, log)
 	}
-
 	return shader, nil
 }
