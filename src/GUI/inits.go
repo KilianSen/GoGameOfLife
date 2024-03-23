@@ -33,8 +33,6 @@ func initOpenGL() uint32 {
 	log.Println("OpenGL version", version)
 
 	program := gl.CreateProgram()
-	initShaders(program)
-	gl.LinkProgram(program)
 
 	return program
 }
@@ -55,8 +53,4 @@ func initShadersOld(program uint32) {
 
 		gl.AttachShader(program, shader)
 	}
-}
-
-func initShaders(program uint32) {
-	loadAndHotReloadCompileShaders("./src/GUI/shaders/", program)
 }

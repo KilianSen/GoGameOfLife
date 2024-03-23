@@ -1,122 +1,137 @@
 package GUI
 
 import (
-	"GameOfLife/src/Watchdogs"
 	"github.com/go-gl/gl/v4.6-core/gl"
+	"log"
 	"os"
-	"strings"
 	"time"
 )
 
-func loadAndHotReloadCompileShaders(path string, program uint32) {
-	// get all files in the shaders directory
+var hotLoadedShaders []hotLoadedShader
+var lastTimeChecked time.Time = time.Now()
+
+type hotLoadedShader struct {
+	shaderPath string
+	shaderHash string
+}
+
+func hotShaders(path string, program *uint32) {
+	// check for shader changes if there are changes, remove old shaders, recompile the shaders and reattach them to the program
+
+	// check if the delta time is greater than 1 second
+	if time.Since(lastTimeChecked) < time.Second {
+		return
+	}
+	lastTimeChecked = time.Now()
+
+	// check if there are any new shaders
 	files, err := os.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
 
-	// list of shaders that are currently loaded
-	var shaders []Shader
-
+	// add new shaders to the hotLoadedShaders list
 	for _, file := range files {
-		extension := strings.Split(file.Name(), ".")[1]
-
-		// check if shader type is supported
-		if extension != VertexShader &&
-			extension != FragmentShader &&
-			extension != ComputeShader &&
-			extension != GeometryShader {
+		if file.IsDir() {
+			continue
+		}
+		if isShader, _ := FileIsShader(file.Name()); !isShader {
 			continue
 		}
 
-		// register the shader file for hot reloading
-		shader, err := os.ReadFile(path +
-			"/" + file.Name())
-		if err != nil {
-			panic(err)
-		}
-
-		shaderCode := string(shader)
-
-		// check if the shader is already loaded
-		var shaderIndex int
+		// check if the shader is not in the hotLoadedShaders list
 		var shaderExists bool
-		for i, s := range shaders {
-			if s.shaderName == file.Name() {
-				shaderIndex = i
+		for _, s := range hotLoadedShaders {
+			if s.shaderPath == path+file.Name() {
 				shaderExists = true
 				break
 			}
 		}
 
-		// if the shader is already loaded, check if it has changed
-		if shaderExists {
-			if shaders[shaderIndex].shaderCode == shaderCode {
+		if !shaderExists {
+			hotLoadedShaders = append(hotLoadedShaders, hotLoadedShader{shaderPath: path + file.Name(), shaderHash: ""})
+		}
+	}
+
+	forceRecompile := false
+
+	// remove shaders that are not in the directory anymore
+	for i, s := range hotLoadedShaders {
+		var shaderExists bool
+		for _, file := range files {
+			if file.IsDir() {
 				continue
+			}
+			if s.shaderPath == path+file.Name() {
+				shaderExists = true
+				break
 			}
 		}
 
-		// if the shader is not loaded or has changed, compile it
-		var shaderType uint32
-		switch extension {
-		case VertexShader:
-			shaderType = gl.VERTEX_SHADER
-		case FragmentShader:
-			shaderType = gl.FRAGMENT_SHADER
-		case ComputeShader:
-			shaderType = gl.COMPUTE_SHADER
-		case GeometryShader:
-			shaderType = gl.GEOMETRY_SHADER
+		if !shaderExists {
+			forceRecompile = true
+			hotLoadedShaders = append(hotLoadedShaders[:i], hotLoadedShaders[i+1:]...)
 		}
 
-		shaders = append(shaders, Shader{
-			shaderFile: path + "/" + file.Name(),
-			shaderName: file.Name(),
-			shaderType: shaderType,
-			shaderCode: shaderCode,
-		})
+	}
 
-		// add a file watcher to the shader file
-		// if the file changes, recompile and attach all shaders
-		// to the program
+	// check if the shaders have changed
 
-		_, err = Watchdogs.FileWatchdog(path+"/"+file.Name(), func(updatedData *string) error {
-			shaders[shaderIndex].shaderCode = *updatedData
-			recompileAndAttachShaders(shaders, program)
-			return nil
-		}, time.Second)
-		if err != nil {
-			return
+	recompile := false
+
+	if !forceRecompile {
+		for i, s := range hotLoadedShaders {
+			fileData, err := os.ReadFile(s.shaderPath)
+			if err != nil {
+				panic(err)
+			}
+			hash := GetHash(fileData)
+			if s.shaderHash == string(hash) {
+				continue
+			}
+			hotLoadedShaders[i].shaderHash = string(hash)
+			recompile = true
 		}
 	}
 
-	recompileAndAttachShaders(shaders, program)
+	if recompile || forceRecompile {
+		// recompile the shaders and reattach them to the program
+		gl.DeleteProgram(*program)
+		*program = initOpenGL()
 
-}
-
-func recompileAndAttachShaders(shaders []Shader, program uint32) {
-	println("Recompiling shaders")
-	// remove all shaders from the program
-	for _, shader := range shaders {
-		if shader.shaderID != 0 {
-			gl.DetachShader(program, shader.shaderID)
-			gl.DeleteShader(shader.shaderID)
+		// print every shader that is being recompiled
+		debugPrint := ""
+		for _, s := range hotLoadedShaders {
+			debugPrint += " " + s.shaderPath
 		}
-	}
+		log.Println("Recompiling shaders:" + debugPrint)
 
-	// compile all shaders
-	compiledShaders := make([]uint32, 0)
-	for _, shader := range shaders {
-		compiledShader, err := compileShader(shader.shaderCode, shader.shaderType)
-		if err != nil {
-			panic(err)
+		for _, s := range hotLoadedShaders {
+			_, FileType := FileIsShader(s.shaderPath)
+
+			// get last modified time
+			fileInfo, err := os.Stat(s.shaderPath)
+			if err != nil {
+				panic(err)
+			}
+			for time.Since(fileInfo.ModTime()) < time.Second*2 {
+				// wait for the file to be fully written
+				time.Sleep(time.Millisecond * 250)
+			}
+
+			shaderCode, err := os.ReadFile(s.shaderPath)
+			if err != nil {
+				panic(err)
+			}
+
+			shader, err := compileShader(string(shaderCode), uint32(FileType))
+			if err != nil {
+				panic(err)
+			}
+			gl.AttachShader(*program, shader)
+
 		}
-		compiledShaders = append(compiledShaders, compiledShader)
+		gl.LinkProgram(*program)
 	}
 
-	// attach all shaders to the program
-	for index, shader := range compiledShaders {
-		shaders[index].shaderID = shader
-		gl.AttachShader(program, shader)
-	}
 }

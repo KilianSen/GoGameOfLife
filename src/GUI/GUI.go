@@ -30,6 +30,10 @@ func GUI() {
 
 	vao := makeVao(triangle)
 	for !window.ShouldClose() {
+
+		// check for shader changes if there are changes, remove old shaders, recompile the shaders and reattach them to the program
+		hotShaders("./src/GUI/shaders/", &program)
+
 		draw(vao, window, program)
 	}
 }
