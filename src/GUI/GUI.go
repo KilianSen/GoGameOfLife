@@ -6,51 +6,75 @@ import (
 	"runtime"
 )
 
-const (
-	width  = 500
-	height = 500
-	title  = "Game of Life"
-)
-
 var (
-	triangle = []float32{
-		0, 0.5, 0,
+	Triangle = []float32{
+		-0.5, 0.5, 0,
 		-0.5, -0.5, 0,
 		0.5, -0.5, 0,
-		1.5, 0.5, 0,
+	}
+
+	Square = []float32{
+		-0.5, 0.5, 0,
+		-0.5, -0.5, 0,
+		0.5, -0.5, 0,
+
+		-0.5, 0.5, 0,
+		0.5, 0.5, 0,
+		0.5, -0.5, 0,
 	}
 )
 
-func GUI() {
+type Gui struct {
+	window           *glfw.Window
+	program          uint32
+	cells            *[][]bool
+	applyShadersFunc func(path string, program *uint32)
+
+	width  int
+	height int
+
+	title string
+}
+
+func NewGUI() *Gui {
 	runtime.LockOSThread()
-
-	window := initGlfw()
 	defer glfw.Terminate()
-	program := initOpenGL()
-
-	vao := makeVao(triangle)
-	for !window.ShouldClose() {
-
-		// check for shader changes if there are changes, remove old shaders, recompile the shaders and reattach them to the program
-		hotShaders("./src/GUI/shaders/", &program)
-
-		draw(vao, window, program)
+	return &Gui{
+		window:           initGlfw(),
+		program:          initOpenGL(),
+		cells:            nil,
+		applyShadersFunc: hotShaders,
+		width:            0,
+		height:           0,
+		title:            "",
 	}
 }
 
-func draw(vao uint32, window *glfw.Window, program uint32) {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.UseProgram(program)
+func newVertices(x, y, rows, cols int) uint32 {
+	points := make([]float32, len(Square), len(Square))
+	copy(points, Square)
 
-	gl.BindVertexArray(vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(triangle)/3))
+	for i := 0; i < len(points); i++ {
+		var position float32
+		var size float32
+		switch i % 3 {
+		case 0:
+			size = 1.0 / float32(cols)
+			position = float32(x) * size
+		case 1:
+			size = 1.0 / float32(rows)
+			position = float32(y) * size
+		default:
+			continue
+		}
 
-	glfw.PollEvents()
-	window.SwapBuffers()
-}
+		if points[i] < 0 {
+			points[i] = (position * 2) - 1
+		} else {
+			points[i] = ((position + size) * 2) - 1
+		}
+	}
 
-// makeVao initializes and returns a vertex array from the points provided.
-func makeVao(points []float32) uint32 {
 	var vbo uint32
 	gl.GenBuffers(1, &vbo)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
@@ -62,6 +86,5 @@ func makeVao(points []float32) uint32 {
 	gl.EnableVertexAttribArray(0)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 0, nil)
-
 	return vao
 }
