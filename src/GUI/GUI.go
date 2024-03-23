@@ -25,32 +25,36 @@ var (
 )
 
 type Gui struct {
-	window           *glfw.Window
-	program          uint32
-	cells            *[][]bool
-	applyShadersFunc func(path string, program *uint32)
+	Window           *glfw.Window
+	Program          uint32
+	Cells            *[][][]bool
+	ApplyShadersFunc func(path string, program *uint32)
 
-	width  int
-	height int
+	Width  int
+	Height int
 
-	title string
+	Title string
 }
 
-func NewGUI() *Gui {
+func NewGUI(title string, width int, height int) *Gui {
 	runtime.LockOSThread()
-	defer glfw.Terminate()
-	return &Gui{
-		window:           initGlfw(),
-		program:          initOpenGL(),
-		cells:            nil,
-		applyShadersFunc: hotShaders,
-		width:            0,
-		height:           0,
-		title:            "",
+
+	gui := Gui{
+		Window:           nil,
+		Program:          0,
+		Cells:            nil,
+		ApplyShadersFunc: hotShaders,
+		Width:            width,
+		Height:           height,
+		Title:            title,
 	}
+
+	gui.Window = initGlfw(gui)
+	gui.Program = initOpenGL()
+	return &gui
 }
 
-func newVertices(x, y, rows, cols int) uint32 {
+func NewVertices(x, y, rows, cols int) uint32 {
 	points := make([]float32, len(Square), len(Square))
 	copy(points, Square)
 

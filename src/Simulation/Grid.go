@@ -44,7 +44,13 @@ func (g *Grid) GetNeighbours(c *Cell) []Cell {
 					continue
 				}
 				if c.x+i >= 0 && c.x+i < len(g.Cells) && c.y+j >= 0 && c.y+j < len(g.Cells[0]) && c.z+k >= 0 && c.z+k < len(g.Cells[0][0]) {
-					neighbours = append(neighbours, g.Cells[c.x+i][c.y+j][c.z+k])
+
+					// check if is within bounds
+					if c.x+i >= 0 && c.x+i < len(g.Cells) && c.y+j >= 0 && c.y+j < len(g.Cells[0]) && c.z+k >= 0 && c.z+k < len(g.Cells[0][0]) {
+						neighbours = append(neighbours, g.Cells[c.x+i][c.y+j][c.z+k])
+					}
+
+					//neighbours = append(neighbours, g.Cells[c.x+i][c.y+j][c.z+k])
 				}
 			}
 		}

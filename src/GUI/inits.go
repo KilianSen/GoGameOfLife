@@ -6,17 +6,18 @@ import (
 	"log"
 )
 
-func initGlfw() *glfw.Window {
+func initGlfw(gui Gui) *glfw.Window {
 	if err := glfw.Init(); err != nil {
 		panic(err)
 	}
+
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
 	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 
-	window, err := glfw.CreateWindow(width, height, title, nil, nil)
+	window, err := glfw.CreateWindow(gui.Width, gui.Height, gui.Title, nil, nil)
 	if err != nil {
 		panic(err)
 	}
