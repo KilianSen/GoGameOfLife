@@ -39,14 +39,14 @@ func initOpenGL() uint32 {
 	return program
 }
 
-func initShaders(program uint32) {
+func initShadersOld(program uint32) {
 	shaders, err := loadShaders("./src/GUI/shaders/")
 	if err != nil {
 		panic(err)
 	}
 
 	for _, rawShader := range shaders {
-		shader, err := compileShader(rawShader.shaderCode, uint32(rawShader.shaderType))
+		shader, err := compileShader(rawShader.shaderCode, rawShader.shaderType)
 		if err != nil {
 			panic(err)
 		}
@@ -55,4 +55,8 @@ func initShaders(program uint32) {
 
 		gl.AttachShader(program, shader)
 	}
+}
+
+func initShaders(program uint32) {
+	loadAndHotReloadCompileShaders("./src/GUI/shaders/", program)
 }

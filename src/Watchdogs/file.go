@@ -1,8 +1,10 @@
 package Watchdogs
 
 import (
+	"bytes"
+	"crypto/sha1"
+	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"log"
 	"os"
 	"time"
 )
@@ -30,36 +32,46 @@ func FileWatchdog(filePath string, callback callback, timeout time.Duration) (de
 		}, err
 	}
 
-	ticker := time.NewTicker(timeout)
-
 	go func() {
+		var savedHash []byte
+
+		ticker := time.NewTicker(timeout)
 		for done != nil {
+			println("Checking file")
 			select {
 			case <-ticker.C:
-				select {
-				case event, ok := <-watcher.Events:
-					if !ok {
-						return
-					}
-					if event.Op&fsnotify.Write == fsnotify.Write {
+			}
 
-						fileData, err := os.ReadFile(filePath)
-						if err != nil {
-							panic(err)
-						}
+			// calculate sha1 hash of file
+			fileData, err := os.ReadFile(filePath)
+			if err != nil {
+				panic(err)
+			}
 
-						stringFileData := string(fileData)
+			hashCreator := sha1.New()
+			_, err = hashCreator.Write(fileData)
+			if err != nil {
+				panic(err)
+			}
 
-						err = callback(&stringFileData)
-					}
-				case err, ok := <-watcher.Errors:
-					if !ok {
-						return
-					}
-					log.Println("error:", err)
-				}
+			hash := hashCreator.Sum(nil)
+
+			if bytes.Equal(hash, savedHash) {
+				continue
+			}
+			println("File changed")
+			fmt.Printf("1: %x ", hash)
+			fmt.Printf("2: %x\n", savedHash)
+			savedHash = hash
+
+			stringFileData := string(fileData)
+
+			err = callback(&stringFileData)
+			if err != nil {
+				panic(err)
 			}
 		}
+
 	}()
 
 	return func() {
